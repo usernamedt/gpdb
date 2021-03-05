@@ -106,6 +106,9 @@ int			CommitDelay = 0;	/* precommit delay in microseconds */
 int			CommitSiblings = 5; /* # concurrent xacts needed to sleep */
 int			max_slot_wal_keep_size_mb = -1;
 
+/* GPDB specific */
+bool gp_pause_on_restore_point_replay = false;
+
 #ifdef WAL_DEBUG
 bool		XLOG_DEBUG = false;
 #endif
@@ -10386,7 +10389,14 @@ xlog_redo(XLogRecPtr beginLoc __attribute__((unused)), XLogRecPtr lsn __attribut
 	}
 	else if (info == XLOG_RESTORE_POINT)
 	{
-		/* nothing to do here */
+		/*
+		 * GPDB: Restore point records can act as a point of
+		 * synchronization to ensure cluster-wide consistency during WAL
+		 * replay. WAL replay is paused at each restore point until it is
+		 * explicitly resumed.
+		 */
+		if (gp_pause_on_restore_point_replay)
+			SetRecoveryPause(true);
 	}
 	else if (info == XLOG_FPI)
 	{
