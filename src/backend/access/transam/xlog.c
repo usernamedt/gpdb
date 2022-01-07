@@ -12817,28 +12817,13 @@ SetWalWriterSleeping(bool sleeping)
 }
 
 /*
- * True if we are running standby-mode continuous recovery.
- * Note this would return false after finishing the recovery, even if
- * we are still on standby master with a primary master running.
- * Also this only works in the startup process as the StandbyMode
- * flag is not in shared memory.
- */
-bool
-IsStandbyMode(void)
-{
-	return StandbyMode;
-}
-
-/*
- * True if we are running crash recovery.
- * False if we are running standby continious recovery or not in recovery at all
- * This only works in the startup process as the ArchiveRecoveryRequested and
- * StandbyModeRequested flags are not in shared memory.
+ * True if we are currently performing crash recovery.
+ * False if we are running standby-mode continuous or archive recovery. 
  */
 bool
 IsCrashRecoveryOnly(void)
 {
-	return ArchiveRecoveryRequested == false && StandbyModeRequested == false;
+	return !ArchiveRecoveryRequested && !StandbyModeRequested;
 }
 
 /*
